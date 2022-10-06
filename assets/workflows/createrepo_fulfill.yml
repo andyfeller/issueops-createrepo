@@ -1,0 +1,20 @@
+name: Create Repo - Fulfill
+on:
+  issue_comment:
+    types:
+      - created
+env:
+  LGTM_TEAM: lgtm
+jobs:
+  fulfill:
+    name: Fulfill issue
+    runs-on: ubuntu-20.04
+    if: contains(github.event.issue.labels.*.name, 'createrepo') && github.event.issue.state == 'open' && startsWith(github.event.comment.body, '/lgtm')
+    steps:
+      - name: Fulfill
+        uses: andyfeller/issueops-createrepo/fulfill
+        with:
+          authentication: app
+          application-id: ${{ secrets.APP_ID }}
+          application-private-key: ${{ secrets.APP_PEM }}
+          team-assign: ${{ env.LGTM_TEAM }}

@@ -1,0 +1,79 @@
+# GitHub Enterprise Documentation:
+# - https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms
+# - https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-githubs-form-schema
+#
+name: Create Repo
+description: Request creation of GitHub repository
+labels:
+  - administration
+  - createrepo
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Need repository created?
+
+        Fill out this form, get a `/lgtm` comment, and you're golden!
+  - type: dropdown
+    id: repository-owner
+    attributes:
+      label: Repository owner
+      description: Select an owner
+      options:
+        - tinyfists
+    validations:
+      required: true
+  - type: input
+    id: repository-name
+    attributes:
+      label: Repository name
+      description: Great repository names are short and memorable.
+    validations:
+      required: true
+  - type: input
+    id: repository-description
+    attributes:
+      label: Repository description
+  - type: dropdown
+    id: repository-visibility
+    attributes:
+      label: Repository visibility
+      description: |
+        - **Public**: Anyone on the internet can see this repository. You choose who can commit.
+        - **Internal**: Enterprise members can see this repository. You choose who can commit.
+        - **Private**: You choose who can see and commit to this repository.
+      options:
+        - Public
+        - Internal
+        - Private
+    validations:
+      required: true
+  - type: textarea
+    id: repository-justification
+    attributes:
+      label: Repository justification
+      description: |
+        Understanding the business case for `Public` or `Private` visibility instead of `Internal`.
+  - type: textarea
+    id: repository-access
+    attributes:
+      label: Repository access
+      description: |
+        Comma-separated list of teams and permissions to grant including:
+        - **Read**: Can read and clone this repository. Can also open and comment on issues and pull requests.
+        - **Triage**: Can read and clone this repository. Can also manage issues and pull requests.
+        - **Write**: Can read, clone, and push to this repository.  Can also manage issues and pull requests.
+        - **Maintain**: Can read, clone, and push to this repository.  They can also manage issues, pull requests, and some repository settings.
+        - **Admin**: Can read, clone, and push to this repository.  Can also manage issues, pull requests, and repository settings including adding collaborators.
+        - **Custom**: Name of [custom repository role](https://docs.github.com/en/enterprise-cloud@latest/organizations/managing-peoples-access-to-your-organization-with-roles/managing-custom-repository-roles-for-an-organization), permissions vary
+
+        Examples:
+        ```
+        @org/teamslug,read
+        @org/teamslug,triage
+        @org/teamslug,write
+        @org/teamslug,maintain
+        @org/teamslug,admin
+        ```
+    validations:
+      required: true

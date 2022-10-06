@@ -1,0 +1,174 @@
+name: |
+  Repository Creation: Fulfill
+description: |
+  Action used to fulfill issue-ops requests around creating GitHub repositories.
+inputs:
+  authentication:
+    description: Method to authenticate client; either 'app' or 'token'
+    required: true
+  application-id:
+    description: Application ID of GitHub App, used if `authentication` is 'app'
+    required: false
+  application-private-key:
+    description: Private SSH key of GitHub App, used if `authentication` is 'app'
+    required: false
+  github-token:
+    description: GitHub token, used if `authentication` is 'token'
+    required: false
+  team-assign:
+    description: GitHub team slug for assigning issue
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Authenticate
+      id: authenticate
+      uses: andyfeller/issueops-createrepo/authenticate
+      with:
+        authentication: ${{ inputs.authentication }}
+        application-id: ${{ inputs.application-id }}
+        application-private-key: ${{ inputs.application-private-key }}
+        github-token: ${{ inputs.github-token }}
+
+    - name: Authorize
+      id: authorize
+      uses: andyfeller/issueops-createrepo/authorize
+      with:
+        authentication: token
+        github-token: ${{ steps.authenticate.outputs.token }}
+        team-assign: ${{ inputs.team-assign }}
+
+    - name: Validate
+      id: validate
+      uses: andyfeller/issueops-createrepo/validate
+      with:
+        authentication: token
+        github-token: ${{ steps.authenticate.outputs.token }}
+        team-mention: "false"
+
+    - name: Create repository
+      id: create-repo
+      uses: actions/github-script@v6
+      env:
+        REPOSITORY_OWNER: ${{ steps.validate.outputs.repository-owner }}
+        REPOSITORY_NAME: ${{ steps.validate.outputs.repository-name }}
+        REPOSITORY_DESCRIPTION: ${{ steps.validate.outputs.repository-description }}
+        REPOSITORY_VISIBILITY: ${{ steps.validate.outputs.repository-visibility }}
+      with:
+        github-token: ${{ steps.authenticate.outputs.token }}
+        script: |
+          return await github.rest.repos.createInOrg({
+            org: process.env.REPOSITORY_OWNER,
+            name: process.env.REPOSITORY_NAME,
+            description: process.env.REPOSITORY_DESCRIPTION,
+            visibility: process.env.REPOSITORY_VISIBILITY,
+            auto_init: true,
+          })
+
+    - name: Verify create repository results
+      uses: actions/github-script@v6
+      env:
+        ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+        CREATE_REPO_JSON: ${{ steps.create-repo.outputs.result }}
+      with:
+        script: |
+          const response = JSON.parse(process.env.CREATE_REPO_JSON)
+          const jsonPretty = JSON.stringify(response, null, 2)
+          let message;
+
+          if (response.status == 201) {
+            message = `@${process.env.ISSUE_AUTHOR} : Your repository has been created: ${response.data.html_url}`
+          } else {
+            message = `@${context.actor} : Workflow is either not authorized to create repository or something went wrong.`
+            core.setFailed(message)
+          }
+
+          const body = `
+          **${message}**
+
+          <details>
+            <summary>Create Organization Repository Response</summary>
+
+            \`\`\`json
+            ${jsonPretty}
+            \`\`\`
+          </details>
+          `
+
+          github.rest.issues.createComment({
+            ...context.repo,
+            issue_number: context.issue.number,
+            body
+          })
+
+    - name: Grant repository access
+      id: repo-access
+      uses: actions/github-script@v6
+      env:
+        REPOSITORY_ASSIGNMENTS_JSON: ${{ steps.validate.outputs.repository-assignments }}
+      with:
+        github-token: ${{ steps.authenticate.outputs.token }}
+        script: |
+          const assignments = JSON.parse(process.env.REPOSITORY_ASSIGNMENTS_JSON)
+
+          for (const assignment of assignments) {
+            try {
+              console.log(`Processing repository access to "${assignment.owner}/${assignment.repo}" for "${assignment.org}/${assignment.team_slug}" team with "${assignment.permission}" permission`)
+              await github.rest.teams.addOrUpdateRepoPermissionsInOrg(assignment)
+            } catch (error) {
+              if (error.status !== 404) {
+                core.setFailed(`${assignment.owner}/${assignment.repo} could not grant ${assignment.permission} access to ${assignment.org}/${assignment.team_slug}; please follow up on issue and close issue.`)
+                throw error
+              }
+            }
+          }
+
+    - name: Handle grant repository access failure
+      if: ${{ failure() }}
+      uses: actions/github-script@v6
+      env:
+        REPOSITORY_OWNER: ${{ steps.validate.outputs.repository-owner }}
+        REPOSITORY_NAME: ${{ steps.validate.outputs.repository-name }}
+      with:
+        script: |
+          const body = `
+          @${context.actor} : Unfortunately, it appears something went wrong in granting access to ${process.env.REPOSITORY_OWNER}/${process.env.REPOSITORY_NAME}.
+          `
+
+          github.rest.issues.createComment({
+            ...context.repo,
+            issue_number: context.issue.number,
+            body
+          })
+
+    - name: Verify grant repository access results
+      uses: actions/github-script@v6
+      env:
+        ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+        REPOSITORY_ASSIGNMENTS_JSON: ${{ steps.validate.outputs.repository-assignments }}
+      with:
+        github-token: ${{ steps.authenticate.outputs.token }}
+        script: |
+          const assignments = JSON.parse(process.env.REPOSITORY_ASSIGNMENTS_JSON)
+          const assignmentsPretty = assignments.map(assignment => `1. @${assignment.org}/${assignment.team_slug}: ${assignment.permission}`).join("\r\n")
+          const body = `
+          **@${process.env.ISSUE_AUTHOR} : The following teams have been granted access to your repository:**
+
+          ${assignmentsPretty}
+          `
+
+          github.rest.issues.createComment({
+            ...context.repo,
+            issue_number: context.issue.number,
+            body
+          })
+
+    - name: Close issue
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.update({
+            ...context.repo,
+            issue_number: context.issue.number,
+            state: "closed",
+          })

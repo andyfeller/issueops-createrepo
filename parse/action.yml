@@ -1,0 +1,14 @@
+name: |
+  Repository Creation: Parse
+description: |
+  Action used to parse issue-ops requests around creating GitHub repositories.
+outputs:
+  data:
+    description: The extracted payload data from the issue body labels in JSON encoded form
+    value: ${{ steps.parse.outputs.data }}
+runs:
+  using: composite
+  steps:
+    - name: Parse issue form
+      id: parse
+      uses: zentered/issue-forms-body-parser@v1.4.5

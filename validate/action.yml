@@ -1,0 +1,142 @@
+name: |
+  Repository Creation: Validate
+description: |
+  Action used to validate issue-ops requests around creating GitHub repositories.
+inputs:
+  authentication:
+    description: Method to authenticate client; either 'app' or 'token'
+    required: true
+  application-id:
+    description: Application ID of GitHub App, used if `authentication` is 'app'
+    required: false
+  application-private-key:
+    description: Private SSH key of GitHub App, used if `authentication` is 'app'
+    required: false
+  github-token:
+    description: GitHub token, used if `authentication` is 'token'
+    required: false
+  team-assign:
+    description: GitHub team slug for assigning issue
+    required: true
+  team-mention:
+    description: Whether to mention the team
+    default: "true"
+    required: false
+  validate-file:
+    description: actions/github-script compatible module extracting and validating fields from issue form
+    default: andyfeller/issueops-createrepo/validate/validate.js
+    required: true
+outputs:
+  repository-access:
+    description: Unprocessed list of teams and permissions to grant to repository being created
+    value: ${{ steps.inputs.outputs.repository-access }}
+  repository-assignments:
+    description: Processed JSON list of teams and permissions to grant to repository being created
+    value: ${{ steps.inputs.outputs.repository-assignments }}
+  repository-description:
+    description: Description of repository being created
+    value: ${{ steps.inputs.outputs.repository-description }}
+  repository-name:
+    description: Name of repository being created
+    value: ${{ steps.inputs.outputs.repository-name }}
+  repository-owner:
+    description: Owner of repository being created
+    value: ${{ steps.inputs.outputs.repository-owner }}
+  repository-visibility:
+    description: Visibility of repository being created
+    value: ${{ steps.inputs.outputs.repository-visibility }}
+runs:
+  using: composite
+  steps:
+    - name: Authenticate
+      id: authenticate
+      uses: andyfeller/issueops-createrepo/authenticate
+      with:
+        authentication: ${{ inputs.authentication }}
+        application-id: ${{ inputs.application-id }}
+        application-private-key: ${{ inputs.application-private-key }}
+        github-token: ${{ inputs.github-token }}
+        
+    - name: Parse issue
+      id: parse
+      uses: andyfeller/issueops-createrepo/parse
+
+    - name: Record issue form results
+      uses: actions/github-script@v6
+      env:
+        ISSUE_FORM_JSON: ${{ steps.parse.outputs.data }}
+      with:
+        github-token: ${{ steps.authenticate.outputs.token }}
+        script: |
+          const issueForm = JSON.parse(process.env.ISSUE_FORM_JSON)
+          const jsonPretty = JSON.stringify(issueForm, null, 2)
+
+          const body = `
+          Nice!  Let's validate the issue form so we can get this thing done!
+
+          <details>
+            <summary>Issue Form Payload</summary>
+
+            \`\`\`json
+            ${jsonPretty}
+            \`\`\`
+          </details>
+          `
+
+          github.rest.issues.createComment({
+            ...context.repo,
+            issue_number: context.issue.number,
+            body
+          })
+
+    - name: Verify issue form results
+      id: inputs
+      uses: actions/github-script@v6
+      env:
+        ISSUE_FORM_JSON: ${{ steps.parse.outputs.data }}
+        VALIDATE_FILE: ${{ inputs.validate-file }}
+      with:
+        github-token: ${{ steps.authenticate.outputs.token }}
+        script: |
+          const validate = require(process.env.VALIDATE_FILE)
+          await validate({github, context, core})
+
+    - name: Handle verify issue form results failure
+      if: ${{ failure() }}
+      uses: actions/github-script@v6
+      env:
+        ERRORS: ${{ steps.inputs.outputs.errors }}
+      with:
+        github-token: ${{ steps.authenticate.outputs.token }}
+        script: |
+          const errors = JSON.parse(process.env.ERRORS)
+          const errorsPretty = errors.map(error => `1. ${error}`).join("\r\n")
+          const body = `
+          @${context.actor} : Unfortunately, it appears one or more validation issues arose or something went wrong.
+
+          ${errorsPretty}
+          `
+
+          github.rest.issues.createComment({
+            ...context.repo,
+            issue_number: context.issue.number,
+            body
+          })
+
+    - name: Confirm issue form validity
+      if: ${{ inputs.team-mention == 'true' }}
+      uses: actions/github-script@v6
+      env:
+        LGTM_TEAM: ${{ inputs.team-assign }}
+      with:
+        github-token: ${{ steps.authenticate.outputs.token }}
+        script: |
+          const body = `
+          @${context.actor} : Everything looks good on the surface!  You've done the hard part, so let's get a \`/lgtm\` comment from someone on the @${context.repo.owner}/${process.env.LGTM_TEAM} team to get this repository created.
+          `
+
+          github.rest.issues.createComment({
+            ...context.repo,
+            issue_number: context.issue.number,
+            body
+          })

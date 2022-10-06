@@ -1,0 +1,46 @@
+name: |
+  Repository Creation: Authenticate
+description: |
+  Action used to authenticate issue-ops requests around creating GitHub repositories.
+inputs:
+  authentication:
+    description: Method to authenticate client; either 'app' or 'token'
+    required: true
+  application-id:
+    description: Application ID of GitHub App, used if `authentication` is 'app'
+    required: false
+  application-private-key:
+    description: Private SSH key of GitHub App, used if `authentication` is 'app'
+    required: false
+  github-token:
+    description: GitHub token, used if `authentication` is 'token'
+    required: false
+outputs:
+  token:
+    description: GitHub token to be used remaining steps
+    value: ${{ inputs.authentication == 'app' && steps.github-app-token.outputs.app-token || inputs.github-token }}
+runs:
+  using: composite
+  steps:
+    - name: Generate app installation token
+      if: ${{ inputs.authentication == 'app' }}
+      id: github-app-token
+      uses: microsoftgraph/get-app-token@v1.0.0
+      with:
+        application-id: ${{ inputs.application-id }}
+        application-private-key: ${{ inputs.application-private-key }}
+        
+    - name: Handle generate app installation token failure
+      if: ${{ failure() }}
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const body = `
+          @${context.actor} : Unfortunately, it appears something went wrong in generating app installation token granting.
+          `
+
+          github.rest.issues.createComment({
+            ...context.repo,
+            issue_number: context.issue.number,
+            body
+          })

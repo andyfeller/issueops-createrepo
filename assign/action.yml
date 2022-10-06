@@ -1,0 +1,59 @@
+name: |
+  Repository Creation: Assign
+description: |
+  Action used to assign issue-ops requests around creating GitHub repositories.
+inputs:
+  application-id:
+    description: Application ID of GitHub App, used if `authentication` is 'app'
+    required: false
+  application-private-key:
+    description: Private SSH key of GitHub App, used if `authentication` is 'app'
+    required: false
+  authentication:
+    description: Method to authenticate client; either 'app' or 'token'
+    required: true
+  github-token:
+    description: GitHub token, used if `authentication` is 'token'
+    required: false
+  team-assign:
+    description: GitHub team slug for assigning issue
+    required: true
+  team-assign-number:
+    description: Number of people from GitHub team to assign
+    required: false
+    default: '1'
+runs:
+  using: composite
+  steps:
+    - name: Authenticate
+      id: authenticate
+      uses: andyfeller/issueops-createrepo/authenticate
+      with:
+        authentication: ${{ inputs.authentication }}
+        application-id: ${{ inputs.application-id }}
+        application-private-key: ${{ inputs.application-private-key }}
+        github-token: ${{ inputs.github-token }}
+
+    - name: Acknowledge
+      uses: actions/github-script@v6
+      env:
+        LGTM_TEAM: ${{ inputs.team-assign }}
+      with:
+        github-token: ${{ steps.authenticate.outputs.token }}
+        script: |
+          const body = `
+          @${context.actor} : Hey!  Let's get this issue assigned to someone from the @${context.repo.owner}/${process.env.LGTM_TEAM} team while we validate the request.
+          `
+
+          github.rest.issues.createComment({
+            ...context.repo,
+            issue_number: context.issue.number,
+            body
+          })
+
+    - name: Auto-assign issue
+      uses: pozil/auto-assign-issue@v1.4.0
+      with:
+        repo-token: ${{ steps.authenticate.outputs.token }}
+        teams: ${{ inputs.team-assign }}
+        numOfAssignee: ${{ inputs.team-assign-number }}

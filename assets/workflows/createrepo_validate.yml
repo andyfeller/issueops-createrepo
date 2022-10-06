@@ -1,0 +1,21 @@
+name: Create Repo - Validate
+on:
+  issues:
+    types:
+      - opened
+      - edited
+env:
+  LGTM_TEAM: lgtm
+jobs:
+  validate:
+    name: Validate issue
+    runs-on: ubuntu-20.04
+    if: contains(github.event.issue.labels.*.name, 'createrepo') && github.event.issue.state == 'open'
+    steps:
+      - name: Validate
+        uses: andyfeller/issueops-createrepo/validate
+        with:
+          authentication: app
+          application-id: ${{ secrets.APP_ID }}
+          application-private-key: ${{ secrets.APP_PEM }}
+          team-assign: ${{ env.LGTM_TEAM }}
