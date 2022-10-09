@@ -18,14 +18,4 @@ jobs:
       - name: Lint .github
         run: |
           echo "::add-matcher::.github/actionlint-matcher.json"
-          ./actionlint -color .github
-
-      - name: Lint composite actions
-        run: |
-          echo "::add-matcher::.github/actionlint-matcher.json"
-          ./actionlint -color .
-
-      - name: Lint assets
-        run: |
-          echo "::add-matcher::.github/actionlint-matcher.json"
-          ./actionlint -color ./assets
+          ./actionlint -color
