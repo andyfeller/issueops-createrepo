@@ -50,7 +50,7 @@ runs:
   steps:
     - name: Authenticate
       id: authenticate
-      uses: andyfeller/issueops-createrepo/authenticate
+      uses: andyfeller/issueops-createrepo/authenticate@v1
       with:
         authentication: ${{ inputs.authentication }}
         application-id: ${{ inputs.application-id }}
@@ -59,7 +59,7 @@ runs:
         
     - name: Parse issue
       id: parse
-      uses: andyfeller/issueops-createrepo/parse
+      uses: andyfeller/issueops-createrepo/parse@v1
 
     - name: Record issue form results
       uses: actions/github-script@v6

@@ -12,7 +12,7 @@ jobs:
     if: contains(github.event.issue.labels.*.name, 'createrepo') && github.event.issue.state == 'open' && startsWith(github.event.comment.body, '/lgtm')
     steps:
       - name: Fulfill
-        uses: andyfeller/issueops-createrepo/fulfill
+        uses: andyfeller/issueops-createrepo/fulfill@v1
         with:
           authentication: app
           application-id: ${{ secrets.APP_ID }}

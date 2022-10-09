@@ -5,12 +5,22 @@ on:
       - main
 jobs:
   lint:
-    name: Lint assets
+    name: Lint workflows and actions
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
-      - name: Lint GitHub Action assets
+      - name: Cloning repository
+        uses: actions/checkout@v3
+
+      - name: Install actionlint
         run: |
           bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+
+      - name: Lint .github
+        run: |
           echo "::add-matcher::.github/actionlint-matcher.json"
-          ./actionlint -color ./assets
+          ./actionlint -color --verbose
+
+      - name: Lint assets/workflows
+        run: |
+          echo "::add-matcher::.github/actionlint-matcher.json"
+          ./actionlint -color --verbose assets/workflows/*.yml

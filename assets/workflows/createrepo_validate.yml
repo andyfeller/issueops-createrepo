@@ -13,7 +13,7 @@ jobs:
     if: contains(github.event.issue.labels.*.name, 'createrepo') && github.event.issue.state == 'open'
     steps:
       - name: Validate
-        uses: andyfeller/issueops-createrepo/validate
+        uses: andyfeller/issueops-createrepo/validate@v1
         with:
           authentication: app
           application-id: ${{ secrets.APP_ID }}

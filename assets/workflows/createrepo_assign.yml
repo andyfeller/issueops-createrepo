@@ -12,7 +12,7 @@ jobs:
     if: contains(github.event.issue.labels.*.name, 'createrepo') && github.event.action == 'opened'
     steps:
       - name: Assign
-        uses: andyfeller/issueops-createrepo/assign
+        uses: andyfeller/issueops-createrepo/assign@v1
         with:
           authentication: app
           application-id: ${{ secrets.APP_ID }}
