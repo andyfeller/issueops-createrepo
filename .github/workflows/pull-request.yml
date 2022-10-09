@@ -19,3 +19,8 @@ jobs:
         run: |
           echo "::add-matcher::.github/actionlint-matcher.json"
           ./actionlint -color --verbose
+
+      - name: Lint assets/workflows
+        run: |
+          echo "::add-matcher::.github/actionlint-matcher.json"
+          ./actionlint -color --verbose assets/workflows/*.yml
