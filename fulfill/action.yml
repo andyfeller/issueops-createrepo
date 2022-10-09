@@ -23,7 +23,7 @@ runs:
   steps:
     - name: Authenticate
       id: authenticate
-      uses: andyfeller/issueops-createrepo/authenticate
+      uses: andyfeller/issueops-createrepo/authenticate@v1
       with:
         authentication: ${{ inputs.authentication }}
         application-id: ${{ inputs.application-id }}
@@ -32,7 +32,7 @@ runs:
 
     - name: Authorize
       id: authorize
-      uses: andyfeller/issueops-createrepo/authorize
+      uses: andyfeller/issueops-createrepo/authorize@v1
       with:
         authentication: token
         github-token: ${{ steps.authenticate.outputs.token }}
@@ -40,7 +40,7 @@ runs:
 
     - name: Validate
       id: validate
-      uses: andyfeller/issueops-createrepo/validate
+      uses: andyfeller/issueops-createrepo/validate@v1
       with:
         authentication: token
         github-token: ${{ steps.authenticate.outputs.token }}

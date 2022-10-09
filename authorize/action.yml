@@ -23,7 +23,7 @@ runs:
   steps:
     - name: Authenticate
       id: authenticate
-      uses: andyfeller/issueops-createrepo/authenticate
+      uses: andyfeller/issueops-createrepo/authenticate@v1
       with:
         authentication: ${{ inputs.authentication }}
         application-id: ${{ inputs.application-id }}
