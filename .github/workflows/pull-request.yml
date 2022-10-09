@@ -18,4 +18,4 @@ jobs:
       - name: Lint .github
         run: |
           echo "::add-matcher::.github/actionlint-matcher.json"
-          ./actionlint -color
+          ./actionlint -color --verbose
