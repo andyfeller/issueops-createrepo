@@ -38,10 +38,10 @@ jobs:
         env:
           RELEASE: v${{ steps.semver.outputs.version-major }}.${{ steps.semver.outputs.version-minor }}
         run: |
-          if ! gh release view $RELEASE; then
+          if ! gh release view "$RELEASE"; then
             gh release create "${RELEASE}" --title="${GITHUB_REPOSITORY#*/} ${RELEASE#v}" --generate-notes
           else
-            gh release edit "${RELEASE}" --tag ${RELEASE}
+            gh release edit "${RELEASE}" --tag "${RELEASE}"
           fi
 
       # Adapted from https://github.com/JasonEtco/build-and-tag-action
@@ -50,8 +50,8 @@ jobs:
         env:
           RELEASE: v${{ steps.semver.outputs.version-major }}
         run: |
-          if ! gh release view $RELEASE; then
+          if ! gh release view "$RELEASE"; then
             gh release create "${RELEASE}" --title="${GITHUB_REPOSITORY#*/} ${RELEASE#v}" --generate-notes
           else
-            gh release edit "${RELEASE}" --tag ${RELEASE}
+            gh release edit "${RELEASE}" --tag "${RELEASE}"
           fi
