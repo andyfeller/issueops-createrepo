@@ -36,7 +36,7 @@ jobs:
       # TODO: Editing release should try to regenerate release notes through https://docs.github.com/en/rest/releases/releases#generate-release-notes-content-for-a-release
       - name: Create or update major.minor release
         env:
-          RELEASE: v${{ steps.semver.output.version-major }}.${{ steps.semver.output.version-minor }}
+          RELEASE: v${{ steps.semver.outputs.version-major }}.${{ steps.semver.outputs.version-minor }}
         run: |
           if ! gh release view $RELEASE; then
             gh release create "${RELEASE}" --title="${GITHUB_REPOSITORY#*/} ${RELEASE#v}" --generate-notes
@@ -48,7 +48,7 @@ jobs:
       # TODO: Editing release should try to regenerate release notes through https://docs.github.com/en/rest/releases/releases#generate-release-notes-content-for-a-release
       - name: Create or update major release
         env:
-          RELEASE: v${{ steps.semver.output.version-major }}
+          RELEASE: v${{ steps.semver.outputs.version-major }}
         run: |
           if ! gh release view $RELEASE; then
             gh release create "${RELEASE}" --title="${GITHUB_REPOSITORY#*/} ${RELEASE#v}" --generate-notes
