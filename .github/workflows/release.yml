@@ -1,0 +1,57 @@
+name: release
+on:
+  push:
+    tags:
+      - "v*"
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      # Adapted from https://gist.github.com/bitmvr/9ed42e1cc2aac799b123de9fdc59b016
+      - name: Parse semver information from tag
+        id: semver
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          VERSION="${VERSION#[vV]}"
+          VERSION_MAJOR="${VERSION%%\.*}"
+          VERSION_MINOR="${VERSION#*.}"
+          VERSION_MINOR="${VERSION_MINOR%.*}"
+          VERSION_PATCH="${VERSION##*.}"
+
+          echo "Version: ${VERSION}"
+          echo "Version [major]: ${VERSION_MAJOR}"
+          echo "Version [minor]: ${VERSION_MINOR}"
+          echo "Version [patch]: ${VERSION_PATCH}"
+
+          echo "::set-output name=version::${VERSION}"
+          echo "::set-output name=version-major::${VERSION_MAJOR}"
+          echo "::set-output name=version-minor::${VERSION_MINOR}"
+          echo "::set-output name=version-patch::${VERSION_PATCH}"
+
+      # Adapted from https://github.com/JasonEtco/build-and-tag-action
+      # TODO: Editing release should try to regenerate release notes through https://docs.github.com/en/rest/releases/releases#generate-release-notes-content-for-a-release
+      - name: Create or update major.minor release
+        env:
+          RELEASE: v${{ steps.semver.outputs.version-major }}.${{ steps.semver.outputs.version-minor }}
+        run: |
+          if ! gh release view "$RELEASE"; then
+            gh release create "${RELEASE}" --title="${GITHUB_REPOSITORY#*/} ${RELEASE#v}" --generate-notes
+          else
+            gh release edit "${RELEASE}" --tag "${RELEASE}"
+          fi
+
+      # Adapted from https://github.com/JasonEtco/build-and-tag-action
+      # TODO: Editing release should try to regenerate release notes through https://docs.github.com/en/rest/releases/releases#generate-release-notes-content-for-a-release
+      - name: Create or update major release
+        env:
+          RELEASE: v${{ steps.semver.outputs.version-major }}
+        run: |
+          if ! gh release view "$RELEASE"; then
+            gh release create "${RELEASE}" --title="${GITHUB_REPOSITORY#*/} ${RELEASE#v}" --generate-notes
+          else
+            gh release edit "${RELEASE}" --tag "${RELEASE}"
+          fi

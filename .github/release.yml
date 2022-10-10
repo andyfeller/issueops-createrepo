@@ -1,0 +1,19 @@
+# Docs: https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes#configuration-options
+changelog:
+  exclude:
+    authors:
+      - dependabot
+  categories:
+    - title: 🚀 Enhancements
+      labels:
+        - kind/feature
+    - title: 🐛 Bugs
+      labels:
+        - kind/bug
+        - kind/regression
+    - title: 📖 Docs
+      labels:
+        - kind/documentation
+    - title: Other Changes
+      labels:
+        - "*"
