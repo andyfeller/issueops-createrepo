@@ -36,6 +36,7 @@ jobs:
       # TODO: Editing release should try to regenerate release notes through https://docs.github.com/en/rest/releases/releases#generate-release-notes-content-for-a-release
       - name: Create or update major.minor release
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE: v${{ steps.semver.outputs.version-major }}.${{ steps.semver.outputs.version-minor }}
         run: |
           if ! gh release view "$RELEASE"; then
@@ -48,6 +49,7 @@ jobs:
       # TODO: Editing release should try to regenerate release notes through https://docs.github.com/en/rest/releases/releases#generate-release-notes-content-for-a-release
       - name: Create or update major release
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE: v${{ steps.semver.outputs.version-major }}
         run: |
           if ! gh release view "$RELEASE"; then
