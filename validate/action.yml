@@ -22,10 +22,6 @@ inputs:
     description: Whether to mention the team
     default: "true"
     required: false
-  validate-file:
-    description: actions/github-script compatible module extracting and validating fields from issue form
-    default: andyfeller/issueops-createrepo/validate/validate.js
-    required: true
 outputs:
   repository-access:
     description: Unprocessed list of teams and permissions to grant to repository being created
@@ -94,7 +90,7 @@ runs:
       uses: actions/github-script@v6
       env:
         ISSUE_FORM_JSON: ${{ steps.parse.outputs.data }}
-        VALIDATE_FILE: ${{ inputs.validate-file }}
+        VALIDATE_FILE: ${{ env.GITHUB_ACTION_PATH }}/validate.js
       with:
         github-token: ${{ steps.authenticate.outputs.token }}
         script: |
