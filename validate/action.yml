@@ -90,7 +90,7 @@ runs:
       uses: actions/github-script@v6
       env:
         ISSUE_FORM_JSON: ${{ steps.parse.outputs.data }}
-        VALIDATE_FILE: ${{ env.GITHUB_ACTION_PATH }}/validate.js
+        VALIDATE_FILE: ${{ github.action_path }}/validate.js
       with:
         github-token: ${{ steps.authenticate.outputs.token }}
         script: |
