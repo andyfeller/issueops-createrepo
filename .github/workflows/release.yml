@@ -37,7 +37,7 @@ jobs:
         env:
           MATCH: v(${{ steps.semver.outputs.version-major }}\.${{ steps.semver.outputs.version-minor }})
         run: |
-          export QUERY='
+          QUERY='
             query ($owner:String!, $repo:String!, $endCursor:String) {
               repositoryOwner(login: $owner) {
                 repository(name: $repo) {
@@ -48,8 +48,7 @@ jobs:
                   }
                 }
               }
-            }
-          '
+            }'
 
           PREVIOUS_TAG_NAME=$( gh api graphql -f query="${QUERY}" -F login="{owner}" -F repo="{repo}" --paginate --jq ".data.repositoryOwner.repository.releases.nodes[].tagName | match(\"$MATCH\") | [ .captures[].string ] | sort_by( split(".") | map(tonumber) ) | first' )
           echo "Previous tag name: $PREVIOUS_TAG_NAME"
@@ -59,12 +58,12 @@ jobs:
       - name: Create or update patch release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE: ${{ github.github_ref_name }}
+          RELEASE: ${{ env.GITHUB_REF_NAME }}
           PREVIOUS_TAG_NAME: ${{ steps.lookup.outputs.previous-tag-name }}
         run: |
           if ! gh release view "$RELEASE"; then
             echo "Create $RELEASE release"
-            gh release create "${RELEASE}" --title="${RELEASE}" --generate-notes --notes-start-tag $PREVIOUS_TAG_NAME
+            gh release create "${RELEASE}" --title="${RELEASE}" --generate-notes --notes-start-tag "$PREVIOUS_TAG_NAME"
           else
             echo "Update $RELEASE tag to point to $GITHUB_SHA"
             gh api /repos/{owner}/{repo}/git/refs/tags/$RELEASE -f sha="$GITHUB_SHA" -F force=true
@@ -80,7 +79,7 @@ jobs:
         run: |
           if ! gh release view "$RELEASE"; then
             echo "Create $RELEASE release"
-            gh release create "${RELEASE}" --title="${RELEASE}" --generate-notes --notes-start-tag $PREVIOUS_TAG_NAME
+            gh release create "${RELEASE}" --title="${RELEASE}" --generate-notes --notes-start-tag "$PREVIOUS_TAG_NAME"
           else
             echo "Update $RELEASE tag to point to $GITHUB_SHA"
             gh api /repos/{owner}/{repo}/git/refs/tags/$RELEASE -f sha="$GITHUB_SHA" -F force=true
@@ -96,7 +95,7 @@ jobs:
         run: |
           if ! gh release view "$RELEASE"; then
             echo "Create $RELEASE release"
-            gh release create "${RELEASE}" --title="${RELEASE}" --generate-notes --notes-start-tag $PREVIOUS_TAG_NAME
+            gh release create "${RELEASE}" --title="${RELEASE}" --generate-notes --notes-start-tag "$PREVIOUS_TAG_NAME"
           else
             echo "Update $RELEASE tag to point to $GITHUB_SHA"
             gh api /repos/{owner}/{repo}/git/refs/tags/$RELEASE -f sha="$GITHUB_SHA" -F force=true
