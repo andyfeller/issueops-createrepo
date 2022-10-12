@@ -66,8 +66,8 @@ jobs:
             gh release create "${RELEASE}" --title="${RELEASE}" --generate-notes --notes-start-tag "$PREVIOUS_TAG_NAME"
           else
             echo "Update $RELEASE tag to point to $GITHUB_SHA"
-            gh api /repos/{owner}/{repo}/git/refs/tags/$RELEASE -f sha="$GITHUB_SHA" -F force=true
-            gh release edit "$RELEASE" --notes-file - < $( gh api /repos/{owner}/{repo}/releases/generate-notes -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" )
+            gh api "/repos/{owner}/{repo}/git/refs/tags/$RELEASE" -f sha="$GITHUB_SHA" -F force=true
+            gh api "/repos/{owner}/{repo}/releases/generate-notes" -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" | gh release edit "$RELEASE" --notes-file - 
           fi
 
       # Adapted from https://github.com/JasonEtco/build-and-tag-action
@@ -82,8 +82,8 @@ jobs:
             gh release create "${RELEASE}" --title="${RELEASE}" --generate-notes --notes-start-tag "$PREVIOUS_TAG_NAME"
           else
             echo "Update $RELEASE tag to point to $GITHUB_SHA"
-            gh api /repos/{owner}/{repo}/git/refs/tags/$RELEASE -f sha="$GITHUB_SHA" -F force=true
-            gh release edit "$RELEASE" --notes-file - < $( gh api /repos/{owner}/{repo}/releases/generate-notes -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" )
+            gh api "/repos/{owner}/{repo}/git/refs/tags/$RELEASE" -f sha="$GITHUB_SHA" -F force=true
+            gh api "/repos/{owner}/{repo}/releases/generate-notes" -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" | gh release edit "$RELEASE" --notes-file - 
           fi
 
       # Adapted from https://github.com/JasonEtco/build-and-tag-action
@@ -98,6 +98,6 @@ jobs:
             gh release create "${RELEASE}" --title="${RELEASE}" --generate-notes --notes-start-tag "$PREVIOUS_TAG_NAME"
           else
             echo "Update $RELEASE tag to point to $GITHUB_SHA"
-            gh api /repos/{owner}/{repo}/git/refs/tags/$RELEASE -f sha="$GITHUB_SHA" -F force=true
-            gh release edit "$RELEASE" --notes-file - < $( gh api /repos/{owner}/{repo}/releases/generate-notes -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" )
+            gh api "/repos/{owner}/{repo}/git/refs/tags/$RELEASE" -f sha="$GITHUB_SHA" -F force=true
+            gh api "/repos/{owner}/{repo}/releases/generate-notes" -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" | gh release edit "$RELEASE" --notes-file - 
           fi
