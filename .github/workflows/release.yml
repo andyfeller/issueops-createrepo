@@ -50,7 +50,7 @@ jobs:
               }
             }'
 
-          PREVIOUS_TAG_NAME=$( gh api graphql -f query="${QUERY}" -F login="{owner}" -F repo="{repo}" --paginate --jq ".data.repositoryOwner.repository.releases.nodes[].tagName | match(\"$MATCH\") | [ .captures[].string ] | sort_by( split(".") | map(tonumber) ) | first' )
+          PREVIOUS_TAG_NAME=$( gh api graphql -f query="${QUERY}" -F login="{owner}" -F repo="{repo}" --paginate --jq ".data.repositoryOwner.repository.releases.nodes[].tagName | match(\"$MATCH\") | [ .captures[].string ] | sort_by( split(\".\") | map(tonumber) ) | first" )
           echo "Previous tag name: $PREVIOUS_TAG_NAME"
           echo "::set-output name=previous-tag-name::${PREVIOUS_TAG_NAME}"
 
