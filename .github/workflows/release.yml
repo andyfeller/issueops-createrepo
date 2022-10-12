@@ -36,7 +36,7 @@ jobs:
         id: lookup
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MATCH: v(${{ steps.semver.outputs.version-major }}\\.${{ steps.semver.outputs.version-minor }}\\.\\d)
+          MATCH: v(${{ steps.semver.outputs.version-major }}\\.${{ steps.semver.outputs.version-minor }}\\.\\d+)
         run: |
           # shellcheck disable=SC2016
           QUERY='
@@ -72,7 +72,7 @@ jobs:
           else
             echo "Update $RELEASE tag to point to $GITHUB_SHA"
             gh api "/repos/{owner}/{repo}/git/refs/tags/$RELEASE" -f sha="$GITHUB_SHA" -F force=true
-            gh api "/repos/{owner}/{repo}/releases/generate-notes" -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" | gh release edit "$RELEASE" --notes-file - 
+            gh api "/repos/{owner}/{repo}/releases/generate-notes" -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" --jq ".body" | gh release edit "$RELEASE" --notes-file -
           fi
 
       # Adapted from https://github.com/JasonEtco/build-and-tag-action
@@ -88,7 +88,7 @@ jobs:
           else
             echo "Update $RELEASE tag to point to $GITHUB_SHA"
             gh api "/repos/{owner}/{repo}/git/refs/tags/$RELEASE" -f sha="$GITHUB_SHA" -F force=true
-            gh api "/repos/{owner}/{repo}/releases/generate-notes" -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" | gh release edit "$RELEASE" --notes-file - 
+            gh api "/repos/{owner}/{repo}/releases/generate-notes" -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" --jq ".body" | gh release edit "$RELEASE" --notes-file -
           fi
 
       # Adapted from https://github.com/JasonEtco/build-and-tag-action
@@ -104,5 +104,5 @@ jobs:
           else
             echo "Update $RELEASE tag to point to $GITHUB_SHA"
             gh api "/repos/{owner}/{repo}/git/refs/tags/$RELEASE" -f sha="$GITHUB_SHA" -F force=true
-            gh api "/repos/{owner}/{repo}/releases/generate-notes" -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" | gh release edit "$RELEASE" --notes-file - 
+            gh api "/repos/{owner}/{repo}/releases/generate-notes" -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" --jq ".body" | gh release edit "$RELEASE" --notes-file -
           fi
