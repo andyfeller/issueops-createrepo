@@ -37,6 +37,7 @@ jobs:
         env:
           MATCH: v(${{ steps.semver.outputs.version-major }}\.${{ steps.semver.outputs.version-minor }})
         run: |
+          # shellcheck disable=SC2016
           QUERY='
             query ($owner:String!, $repo:String!, $endCursor:String) {
               repositoryOwner(login: $owner) {
