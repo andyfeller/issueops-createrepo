@@ -36,7 +36,7 @@ jobs:
         id: lookup
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MATCH: v(${{ steps.semver.outputs.version-major }}\\.${{ steps.semver.outputs.version-minor }})
+          MATCH: v(${{ steps.semver.outputs.version-major }}\\.${{ steps.semver.outputs.version-minor }}\\.\\d)
         run: |
           # shellcheck disable=SC2016
           QUERY='
@@ -60,7 +60,7 @@ jobs:
       - name: Create or update patch release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE: ${{ env.GITHUB_REF_NAME }}
+          RELEASE: ${{ github.ref_name }}
           PREVIOUS_TAG_NAME: ${{ steps.lookup.outputs.previous-tag-name }}
         run: |
           if ! gh release view "$RELEASE"; then
