@@ -32,32 +32,73 @@ jobs:
           echo "::set-output name=version-minor::${VERSION_MINOR}"
           echo "::set-output name=version-patch::${VERSION_PATCH}"
 
+      - name: Identify earliest tag for generated release notes
+        id: lookup
+        env:
+          MATCH: v(${{ steps.semver.outputs.version-major }}\.${{ steps.semver.outputs.version-minor }})
+        run: |
+          export QUERY='
+            query ($owner:String!, $repo:String!, $endCursor:String) {
+              repositoryOwner(login: $owner) {
+                repository(name: $repo) {
+                  releases(first: 100, after: $endCursor) {
+                    nodes {
+                      tagName
+                    }
+                  }
+                }
+              }
+            }
+          '
+
+          PREVIOUS_TAG_NAME=$( gh api graphql -f query="${QUERY}" -F login="{owner}" -F repo="{repo}" --paginate --jq ".data.repositoryOwner.repository.releases.nodes[].tagName | match(\"$MATCH\") | [ .captures[].string ] | sort_by( split(".") | map(tonumber) ) | first' )
+          echo "Previous tag name: $PREVIOUS_TAG_NAME"
+          echo "::set-output name=previous-tag-name::${PREVIOUS_TAG_NAME}"
+
       # Adapted from https://github.com/JasonEtco/build-and-tag-action
-      # TODO: Editing release should try to regenerate release notes through https://docs.github.com/en/rest/releases/releases#generate-release-notes-content-for-a-release
-      - name: Create or update major.minor release
+      - name: Create or update patch release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE: v${{ steps.semver.outputs.version-major }}.${{ steps.semver.outputs.version-minor }}
+          RELEASE: ${{ github.github_ref_name }}
+          PREVIOUS_TAG_NAME: ${{ steps.lookup.outputs.previous-tag-name }}
         run: |
           if ! gh release view "$RELEASE"; then
             echo "Create $RELEASE release"
-            gh release create "${RELEASE}" --title="${RELEASE}" --generate-notes
+            gh release create "${RELEASE}" --title="${RELEASE}" --generate-notes --notes-start-tag $PREVIOUS_TAG_NAME
           else
             echo "Update $RELEASE tag to point to $GITHUB_SHA"
-            gh api /repos/$GITHUB_REPOSITORY/git/refs/tags/$RELEASE -f sha="$GITHUB_SHA" -F force=true
+            gh api /repos/{owner}/{repo}/git/refs/tags/$RELEASE -f sha="$GITHUB_SHA" -F force=true
+            gh release edit "$RELEASE" --notes-file - < $( gh api /repos/{owner}/{repo}/releases/generate-notes -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" )
           fi
 
       # Adapted from https://github.com/JasonEtco/build-and-tag-action
-      # TODO: Editing release should try to regenerate release notes through https://docs.github.com/en/rest/releases/releases#generate-release-notes-content-for-a-release
+      - name: Create or update minor release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE: v${{ steps.semver.outputs.version-major }}.${{ steps.semver.outputs.version-minor }}
+          PREVIOUS_TAG_NAME: ${{ steps.lookup.outputs.previous-tag-name }}
+        run: |
+          if ! gh release view "$RELEASE"; then
+            echo "Create $RELEASE release"
+            gh release create "${RELEASE}" --title="${RELEASE}" --generate-notes --notes-start-tag $PREVIOUS_TAG_NAME
+          else
+            echo "Update $RELEASE tag to point to $GITHUB_SHA"
+            gh api /repos/{owner}/{repo}/git/refs/tags/$RELEASE -f sha="$GITHUB_SHA" -F force=true
+            gh release edit "$RELEASE" --notes-file - < $( gh api /repos/{owner}/{repo}/releases/generate-notes -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" )
+          fi
+
+      # Adapted from https://github.com/JasonEtco/build-and-tag-action
       - name: Create or update major release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE: v${{ steps.semver.outputs.version-major }}
+          PREVIOUS_TAG_NAME: ${{ steps.lookup.outputs.previous-tag-name }}
         run: |
           if ! gh release view "$RELEASE"; then
             echo "Create $RELEASE release"
-            gh release create "${RELEASE}" --title="${RELEASE}" --generate-notes
+            gh release create "${RELEASE}" --title="${RELEASE}" --generate-notes --notes-start-tag $PREVIOUS_TAG_NAME
           else
             echo "Update $RELEASE tag to point to $GITHUB_SHA"
-            gh api /repos/$GITHUB_REPOSITORY/git/refs/tags/$RELEASE -f sha="$GITHUB_SHA" -F force=true
+            gh api /repos/{owner}/{repo}/git/refs/tags/$RELEASE -f sha="$GITHUB_SHA" -F force=true
+            gh release edit "$RELEASE" --notes-file - < $( gh api /repos/{owner}/{repo}/releases/generate-notes -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" )
           fi
