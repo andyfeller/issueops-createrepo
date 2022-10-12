@@ -36,7 +36,7 @@ jobs:
         id: lookup
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MATCH: v(${{ steps.semver.outputs.version-major }}\.${{ steps.semver.outputs.version-minor }})
+          MATCH: v(${{ steps.semver.outputs.version-major }}\\.${{ steps.semver.outputs.version-minor }})
         run: |
           # shellcheck disable=SC2016
           QUERY='
