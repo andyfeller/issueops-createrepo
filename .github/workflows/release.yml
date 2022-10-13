@@ -2,7 +2,7 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 permissions:
   contents: write
 jobs:
@@ -36,7 +36,7 @@ jobs:
         id: lookup
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MATCH: v(${{ steps.semver.outputs.version-major }}\\.${{ steps.semver.outputs.version-minor }}\\.\\d+)
+          MATCH: ${{ steps.semver.outputs.version-major }}\\.${{ steps.semver.outputs.version-minor }}\\.\\d+
         run: |
           # shellcheck disable=SC2016
           QUERY='
@@ -52,10 +52,7 @@ jobs:
               }
             }'
 
-          gh api graphql -f query="${QUERY}" -F owner='{owner}' -F repo='{repo}' --paginate --jq ".data.repositoryOwner.repository.releases.nodes[].tagName"
-          gh api graphql -f query="${QUERY}" -F owner='{owner}' -F repo='{repo}' --paginate --jq ".data.repositoryOwner.repository.releases.nodes[].tagName | match(\"$MATCH\")"
-          gh api graphql -f query="${QUERY}" -F owner='{owner}' -F repo='{repo}' --paginate --jq ".data.repositoryOwner.repository.releases.nodes[].tagName | match(\"$MATCH\") | [ .captures[].string ] | sort_by( split(\".\") | map(tonumber) )"
-          PREVIOUS_TAG_NAME=$( gh api graphql -f query="${QUERY}" -F owner='{owner}' -F repo='{repo}' --paginate --jq ".data.repositoryOwner.repository.releases.nodes[].tagName | match(\"$MATCH\") | [ .captures[].string ] | sort_by( split(\".\") | map(tonumber) ) | first" )
+          PREVIOUS_TAG_NAME=$( gh api graphql -f query="${QUERY}" -F owner='{owner}' -F repo='{repo}' --paginate --jq ".data.repositoryOwner.repository.releases.nodes[].tagName | match(\"v$MATCH\") | [ .string ] | sort_by( match(\"v($MATCH)\") | split(\".\") | map(tonumber) ) | first" )
           echo "Previous tag name: $PREVIOUS_TAG_NAME"
           echo "::set-output name=previous-tag-name::${PREVIOUS_TAG_NAME}"
 
