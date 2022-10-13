@@ -62,6 +62,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE: ${{ github.ref_name }}
           PREVIOUS_TAG_NAME: ${{ steps.lookup.outputs.previous-tag-name }}
+          LATEST_TAG_NAME: ${{ github.ref_name }}
         run: |
           if ! gh release view "$RELEASE"; then
             echo "Create $RELEASE release"
@@ -69,7 +70,7 @@ jobs:
           else
             echo "Update $RELEASE tag to point to $GITHUB_SHA"
             gh api "/repos/{owner}/{repo}/git/refs/tags/$RELEASE" -f sha="$GITHUB_SHA" -F force=true
-            gh api "/repos/{owner}/{repo}/releases/generate-notes" -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" --jq ".body" | gh release edit "$RELEASE" --notes-file -
+            gh api "/repos/{owner}/{repo}/releases/generate-notes" -f tag_name="$LATEST_TAG_NAME" -f previous_tag_name="$PREVIOUS_TAG_NAME" --jq ".body" | gh release edit "$RELEASE" --notes-file -
           fi
 
       # Adapted from https://github.com/JasonEtco/build-and-tag-action
@@ -78,6 +79,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE: v${{ steps.semver.outputs.version-major }}.${{ steps.semver.outputs.version-minor }}
           PREVIOUS_TAG_NAME: ${{ steps.lookup.outputs.previous-tag-name }}
+          LATEST_TAG_NAME: ${{ github.ref_name }}
         run: |
           if ! gh release view "$RELEASE"; then
             echo "Create $RELEASE release"
@@ -85,7 +87,7 @@ jobs:
           else
             echo "Update $RELEASE tag to point to $GITHUB_SHA"
             gh api "/repos/{owner}/{repo}/git/refs/tags/$RELEASE" -f sha="$GITHUB_SHA" -F force=true
-            gh api "/repos/{owner}/{repo}/releases/generate-notes" -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" --jq ".body" | gh release edit "$RELEASE" --notes-file -
+            gh api "/repos/{owner}/{repo}/releases/generate-notes" -f tag_name="$LATEST_TAG_NAME" -f previous_tag_name="$PREVIOUS_TAG_NAME" --jq ".body" | gh release edit "$RELEASE" --notes-file -
           fi
 
       # Adapted from https://github.com/JasonEtco/build-and-tag-action
@@ -94,6 +96,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE: v${{ steps.semver.outputs.version-major }}
           PREVIOUS_TAG_NAME: ${{ steps.lookup.outputs.previous-tag-name }}
+          LATEST_TAG_NAME: ${{ github.ref_name }}
         run: |
           if ! gh release view "$RELEASE"; then
             echo "Create $RELEASE release"
@@ -101,5 +104,5 @@ jobs:
           else
             echo "Update $RELEASE tag to point to $GITHUB_SHA"
             gh api "/repos/{owner}/{repo}/git/refs/tags/$RELEASE" -f sha="$GITHUB_SHA" -F force=true
-            gh api "/repos/{owner}/{repo}/releases/generate-notes" -f tag_name="$RELEASE" -f previous_tag_name="$PREVIOUS_TAG_NAME" --jq ".body" | gh release edit "$RELEASE" --notes-file -
+            gh api "/repos/{owner}/{repo}/releases/generate-notes" -f tag_name="$LATEST_TAG_NAME" -f previous_tag_name="$PREVIOUS_TAG_NAME" --jq ".body" | gh release edit "$RELEASE" --notes-file -
           fi
