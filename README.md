@@ -41,52 +41,13 @@ For faster response time, leverage [Slack](https://slack.github.com/) or [Micros
 
 ## Setup
 
-### Step 1: GitHub Action workflow setup
+### Step 1: Authentication setup
 
-1. Create repository containing the following issue labels:
-
-   - `administration`
-   - `createrepo`
-
-1. Expand provided source code zip / tar.gz and commit the GitHub Action workflows and issue forms within:
-
-   ```
-   └── .github
-       ├── ISSUE_TEMPLATE
-       │   └── createrepo.yml
-       └── workflows
-           ├── createrepo_assign.yml
-           ├── createrepo_fulfill.yml
-           └── createrepo_validate.yml
-   ```
-
-1. Update the list of organizations in **repository-owner** field within `.github/ISSUE_TEMPLATE/createrepo.yml`:
-
-   ```yaml
-   - type: dropdown
-      id: repository-owner
-      attributes:
-         label: Repository owner
-         description: Select an owner
-         options:
-         - tinyfists
-         - visibilitysaurus
-   ```
-
-### Step 2: Organization teams for review and approval
-
-1. Create and populate organization teams with individuals for various roles:
-
-   - **`lgtm`**: individuals who can approve requests
-   - **`lgtm-reviewers`**: nested team of `lgtm` of individuals who will be assigned to review and approve requests
-
-   ![Screenshot illustrating nested team relationship described above](https://user-images.githubusercontent.com/2089743/169402822-cff62b00-316d-4841-ad8b-dfb04133d55f.png)
-
-### Step 3: Authentication setup
-
-**Choose one of the following based on your situation, both of equally valuable and supported**
+**Choose one of the following based on your situation, both are equally valuable and supported**
 
 #### Option 1: GitHub App for organization-wide usage
+
+The GitHub App route of gaining elevated access to an organization is that it is not tied to a user and does not cost a user license.  The downside is that GitHub Apps are organization specific, so this approach can only managed the 1 organization.
 
 1. [Create new GitHub App](https://docs.github.com/en/enterprise-cloud@latest/developers/apps/building-github-apps/creating-a-github-app) with the following:
 
@@ -112,6 +73,8 @@ For faster response time, leverage [Slack](https://slack.github.com/) or [Micros
 
 #### Option 2: Enterprise Personal Access Token (PAT) for enterprise-wide usage
 
+The Enterprise PAT route of gaining elevated access to an organization is that it can manage multiple organization across an enterprise.  The downside is that it is tied to a user account, which should be a machine user to avoid disturbances when people are offboarded.
+
 1. Generate [personal access token](https://github.com/settings/tokens) under the machine user account with the following permissions:
 
    - **repo**
@@ -120,6 +83,75 @@ For faster response time, leverage [Slack](https://slack.github.com/) or [Micros
 1. Create the following [repository secrets](https://docs.github.com/en/enterprise-cloud@latest/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository):
 
    1. `ISSUEOPS_TOKEN`:  using personal access token of the machine user account
+
+### Step 2: Organization teams for review and approval
+
+1. Create and populate organization teams with individuals for various roles:
+
+   - **`lgtm`**: individuals who can approve requests
+   - **`lgtm-reviewers`**: nested team of `lgtm` of individuals who will be assigned to review and approve requests
+
+   ![Screenshot illustrating nested team relationship described above](https://user-images.githubusercontent.com/2089743/169402822-cff62b00-316d-4841-ad8b-dfb04133d55f.png)
+
+### Step 3: GitHub Action workflow setup
+
+1. Create repository containing the following issue labels:
+
+   - `administration`
+   - `createrepo`
+
+1. Create `.github` directory containing [issue forms and workflows from `assets` directory](assets)
+
+   ```
+   └── .github
+       ├── ISSUE_TEMPLATE
+       │   └── createrepo.yml
+       └── workflows
+           ├── createrepo_assign.yml
+           ├── createrepo_fulfill.yml
+           └── createrepo_validate.yml
+   ```
+
+1. Update the list of organizations in **repository-owner** field within `.github/ISSUE_TEMPLATE/createrepo.yml`:
+
+   ```yaml
+   - type: dropdown
+      id: repository-owner
+      attributes:
+         label: Repository owner
+         description: Select an owner
+         options:
+         - tinyfists
+         - visibilitysaurus
+   ```
+
+   > **Note**
+   > For multiple organizations, an Enterprise PAT is required.  Otherwise, limit this to the organization where GitHub App is installed.
+
+1. Update the inputs for `andyfeller/issueops-createrepo` action(s) within the workflows based on your authentication setup:
+
+   - Option 1: GitHub App for organization-wide usage
+
+     ```yaml
+           - name: Assign
+             uses: andyfeller/issueops-createrepo/assign@v1
+             with:
+               authentication: app
+               application-id: ${{ secrets.APP_ID }}
+               application-private-key: ${{ secrets.APP_PEM }}
+               team-assign: ${{ env.LGTM_TEAM }}
+     ```
+
+   - Option 2: Enterprise Personal Access Token (PAT) for enterprise-wide usage
+
+     ```yaml
+           - name: Assign
+             uses: andyfeller/issueops-createrepo/assign@v1
+             with:
+               authentication: token
+               github-token: ${{ secrets.ISSUEOPS_TOKEN }}
+               team-assign: ${{ env.LGTM_TEAM }}
+     ```
 
 ## Alterations and Workarounds
 
