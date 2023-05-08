@@ -5,7 +5,7 @@ module.exports = async ({ github, context, core }) => {
     const justification = issueForm["repository-justification"].text
     const name = issueForm["repository-name"].text
     const owner = issueForm["repository-owner"].text
-    const visibility = issueForm["repository-visibility"].text.toLowerCase()
+    const visibility = issueForm["repository-visibility"].text?.toLowerCase()
 
     core.setOutput('repository-access', access)
     core.setOutput('repository-description', description)
@@ -45,7 +45,7 @@ module.exports = async ({ github, context, core }) => {
     }
 
     // Ensure teams specified exist
-    const items = decodeURIComponent(access).split('\n')
+    const items = decodeURIComponent(access).split('\n').map(str => str.trim()).filter(str => str.length)
     const team_owner_regex = /@(.*)\/(.*)/
     const assignments = []
     const reserved_permissions = ['read', 'pull', 'write', 'push', 'triage', 'maintain', 'admin']
@@ -62,7 +62,7 @@ module.exports = async ({ github, context, core }) => {
         }
 
         // Handle mixed case for reserved permissions
-        const reserved_permission = permission.toLowerCase()
+        const reserved_permission = permission?.toLowerCase()
 
         if (reserved_permissions.includes(reserved_permission)) {
             permission = reserved_permission
